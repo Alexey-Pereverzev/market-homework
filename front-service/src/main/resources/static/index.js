@@ -48,14 +48,13 @@
             if ($localStorage.novemberMarketUser) {
                 $http.defaults.headers.common.Authorization = 'Bearer ' + $localStorage.novemberMarketUser.token;
             }
-
-            if (!$localStorage.novemberMarketGuestCartId) {
-                $http.get('http://localhost:5555/cart/api/v1/cart/generate_id')
-                    .then(function (response) {
-                        $localStorage.novemberMarketGuestCartId = response.data.value;
-                        alert($localStorage.novemberMarketGuestCartId);
-                    });
-            }
+        }
+        if (!$localStorage.novemberMarketGuestCartId) {
+            $http.get('http://localhost:5555/cart/api/v1/cart/generate_id')
+                .then(function (response) {
+                    $localStorage.novemberMarketGuestCartId = response.data.value;
+                    alert($localStorage.novemberMarketGuestCartId);
+                });
         }
     }
 })();

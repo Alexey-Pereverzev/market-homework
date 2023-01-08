@@ -6,7 +6,10 @@ import org.example.november_market_2.core.converters.ProductConverter;
 import org.example.november_market_2.core.entities.Product;
 import org.example.november_market_2.core.exceptions.ResourceNotFoundException;
 import org.example.november_market_2.core.repositories.ProductMatrix;
+import org.example.november_market_2.core.repositories.specifications.ProductSpecification;
 import org.example.november_market_2.core.soap.products.ProductSoap;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -75,25 +78,30 @@ public class ProductService {
         }
     }
 
-    public List<ProductDto> findWithFilter(Optional<String> productFilter,
+    public Page<ProductDto> findWithFilter(int page, int pageSize,
+                                           Optional<String> productFilter,
                                            Optional<String> minPriceStr,
                                            Optional<String> maxPriceStr) {
 
-        Optional<BigDecimal> minPrice = strToDecimal(minPriceStr);
-        Optional<BigDecimal> maxPrice = strToDecimal(maxPriceStr);
-
         Specification<Product> spec = Specification.where(null);
 
-        if (productFilter.isPresent() && !productFilter.get().isBlank()) {
-            spec = spec.and(ProductSpecification.productLike(productFilter.get()));
+        if (productFilter.isPresent()) {
+            spec = spec.and(org.example.november_market_2.core.repositories.specifications.ProductSpecification.productLike(productFilter.get()));
         }
-        if (minPrice.isPresent()) {
-            spec = spec.and(ProductSpecification.minPrice(minPrice.get()));
+        if (minPriceStr.isPresent()) {
+            Optional<BigDecimal> minPriceBD = strToDecimal(minPriceStr);
+            if (minPriceBD.isPresent()) {
+                spec = spec.and(org.example.november_market_2.core.repositories.specifications.ProductSpecification.minPrice(minPriceBD.get()));
+            }
         }
-        if (maxPrice.isPresent()) {
-            spec = spec.and(ProductSpecification.maxPrice(maxPrice.get()));
+        if (maxPriceStr.isPresent()) {
+            Optional<BigDecimal> maxPriceBD = strToDecimal(maxPriceStr);
+            if (maxPriceBD.isPresent()) {
+                spec = spec.and(ProductSpecification.maxPrice(maxPriceBD.get()));
+            }
         }
-        return matrix.findAll(spec).stream().map(productConverter::entityToDto).collect(Collectors.toList());
+        return matrix.findAll(spec, PageRequest.of(page, pageSize)).map(productConverter::entityToDto);
     }
+
 }
 

@@ -1,41 +1,20 @@
 angular.module('market').controller('storeController', function ($scope, $http, $localStorage) {
 
-    $scope.loadWithFilter = function() {
-        let suffix = "";
-        let operands = 0;
-        if (($scope.productFilter!=null && $scope.productFilter!=="")) {
-            suffix = "/?";
-            operands = operands + 1;
-        }
-        if (($scope.priceMinFilter!=null && $scope.priceMinFilter!=="")) {
-            suffix = "/?";
-            operands = operands + 1;
-        }
-        if (($scope.priceMaxFilter!=null&& $scope.priceMaxFilter!=="")) {
-            suffix = "/?";
-            operands = operands + 1;
-        }
-        if ($scope.productFilter!=null && $scope.productFilter!=="") {
-            suffix = suffix + "productFilter=" + $scope.productFilter;
-            if (operands > 1) {
-                suffix = suffix + '\&';
-                operands = operands - 1;
+    $scope.loadWithFilter = function (page = 1) {
+        $http({
+            url: 'http://localhost:5555/core/api/v1/products',
+            method: 'GET',
+            params: {
+                p: page,
+                page_size: 5,
+                productFilter: $scope.filter ? $scope.filter.productFilter : null,
+                priceMinFilter: $scope.filter ? $scope.filter.priceMinFilter : null,
+                priceMaxFilter: $scope.filter ? $scope.filter.priceMaxFilter : null
             }
-        }
-        if ($scope.priceMinFilter!=null && $scope.priceMinFilter!=="") {
-            suffix = suffix + "priceMinFilter=" + $scope.priceMinFilter;
-            if (operands > 1) {
-                suffix = suffix + '\&';
-                operands = operands - 1;
-            }
-        }
-        if ($scope.priceMaxFilter!=null && $scope.priceMaxFilter!=="") {
-            suffix = suffix + "priceMaxFilter=" + $scope.priceMaxFilter;
-        }
-        $http.get('http://localhost:5555/core/api/v1/products' + suffix)
-            .then(function (response) {
-                $scope.products = response.data;
-            });
+        }).then(function (response) {
+            $scope.productsPage = response.data;
+            $scope.generatePagesList($scope.productsPage.totalPages);
+        });
     };
 
     $scope.addToCart = function (id) {
@@ -45,6 +24,22 @@ angular.module('market').controller('storeController', function ($scope, $http, 
             .then(function (response) {
             });
     }
+
+    $scope.generatePagesList = function (totalPages) {
+        out = [];
+        for (let i = 0; i < totalPages; i++) {
+            out.push(i + 1);
+        }
+        $scope.pagesList = out;
+    }
+
+    $scope.isPageFirst = function () {
+        return ($scope.productsPage.number <= 0);
+    };
+
+    $scope.isPageLast = function () {
+        return ($scope.productsPage.number > $scope.productsPage.totalPages-2);
+    };
 
     $scope.loadWithFilter(null);
 });
